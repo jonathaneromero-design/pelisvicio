@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>PELISVICIO - Ultra Low Latency</title>
+    <title>PELISVICIO LIVE - Sin Retraso</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Permanent+Marker&display=swap" rel="stylesheet">
     
@@ -16,7 +16,7 @@
         body {
             background-color: var(--negro-fondo);
             background-image: linear-gradient(to bottom, rgba(5, 5, 5, 0.8), rgba(5, 5, 5, 0.9)),
-                url('https://wallpapers.com/images/hd/hd-anime-galaxy-xxotwlnlan1322q0.jpg');
+                url('https://images.alphacoders.com/131/1317666.png');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -28,7 +28,7 @@
         }
 
         .header {
-            background: rgba(10, 10, 10, 0.9);
+            background: rgba(10, 10, 10, 0.95);
             padding: 15px;
             border-bottom: 2px solid var(--azul-neon);
             display: flex;
@@ -48,8 +48,9 @@
 
         .container { max-width: 950px; margin: 15px auto; padding: 10px; }
 
-        .panel {
-            background: rgba(0, 51, 42, 0.6);
+        /* PANEL DE OPERADOR */
+        .operator-panel {
+            background: rgba(0, 51, 42, 0.7);
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 15px;
@@ -57,7 +58,15 @@
             backdrop-filter: blur(10px);
         }
 
-        .id-tag { color: var(--azul-neon); font-weight: bold; font-family: 'Orbitron', sans-serif; }
+        #copy-box {
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border: 1px dashed var(--verde-neon);
+            margin: 10px 0;
+            cursor: pointer;
+            font-size: 0.8em;
+            color: var(--verde-neon);
+        }
 
         /* CONTENEDOR DE VIDEO */
         #video-container {
@@ -66,140 +75,115 @@
             border-radius: 12px;
             border: 3px solid var(--verde-neon);
             overflow: hidden;
-            cursor: none; /* Oculta el puntero sobre el video */
         }
-
-        #video-container:hover { cursor: default; }
 
         video { width: 100%; display: block; pointer-events: none; }
 
-        /* CONTROLES QUE SE OCULTAN */
         .custom-controls {
             position: absolute;
             bottom: 20px;
             right: 20px;
             display: flex;
             gap: 10px;
-            opacity: 0; /* Ocultos por defecto */
-            transition: opacity 0.5s ease;
-            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s;
         }
 
-        /* Clase para mostrar controles cuando hay movimiento */
-        .show-controls { opacity: 1 !important; }
+        #video-container:hover .custom-controls { opacity: 1; }
 
         .btn-control {
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             border: 1px solid var(--azul-neon);
             color: var(--azul-neon);
-            padding: 10px 18px;
+            padding: 8px 15px;
             cursor: pointer;
             font-family: 'Orbitron', sans-serif;
             font-size: 0.7em;
             border-radius: 5px;
-            text-transform: uppercase;
         }
 
-        .btn-control:hover { background: var(--azul-neon); color: black; }
-
-        input, button#startBtn {
-            padding: 8px;
+        button#startBtn {
+            background: var(--azul-neon);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
             font-family: 'Orbitron', sans-serif;
-            border-radius: 4px;
-            border: 1px solid var(--azul-neon);
         }
-
-        button#startBtn { background: var(--azul-neon); cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1 id="main-title">PELISVICIO</h1>
+        <h1>PELISVICIO</h1>
     </div>
 
     <div class="container">
-        <div class="panel">
-            <p>ID SALA: <span id="my-id" class="id-tag">...</span></p>
-            <input type="text" id="peer-id-input" placeholder="ID Amigo">
-            <button id="startBtn" onclick="startSharing()">ENVIAR SEÑAL</button>
+        <div class="operator-panel" id="op-ui">
+            <p style="margin:0 0 10px 0; font-weight:bold;">MODO OPERADOR</p>
+            <div id="copy-box" onclick="copyLink()">Haz clic para copiar el link y pásalo a tus amigos</div>
+            <button id="startBtn" onclick="startBroadcasting()">INICIAR TRANSMISIÓN EN VIVO</button>
         </div>
 
-        <div id="video-container" onmousemove="handleMouseMove()">
+        <div id="video-container">
             <video id="remoteVideo" autoplay playsinline></video>
-            
-            <div id="controls-ui" class="custom-controls">
-                <button class="btn-control" onclick="toggleMute()" id="muteBtn">SONIDO: ON</button>
-                <button class="btn-control" onclick="goFullScreen()">PANTALLA COMPLETA</button>
+            <div class="custom-controls">
+                <button class="btn-control" onclick="toggleMute()" id="muteBtn">AUDIO: ON</button>
+                <button class="btn-control" onclick="goFullScreen()">FULLSCREEN</button>
             </div>
         </div>
     </div>
 
     <script>
-        const shortId = Math.random().toString(36).substr(2, 5).toUpperCase();
-        const peer = new Peer(shortId);
+        // 1. Lógica de Link Automático
+        let hashId = window.location.hash.substring(1);
+        const isOperator = !hashId;
+        const peerId = isOperator ? Math.random().toString(36).substr(2, 6).toUpperCase() : "REC-" + hashId;
+        const targetId = isOperator ? "REC-" + peerId : peerId;
+
+        const peer = new Peer(peerId, { debug: 1 });
         const video = document.getElementById('remoteVideo');
-        const ui = document.getElementById('controls-ui');
-        let timer;
 
-        peer.on('open', id => document.getElementById('my-id').innerText = id);
+        if (!isOperator) {
+            document.getElementById('op-ui').style.display = 'none';
+        } else {
+            document.getElementById('copy-box').innerText = window.location.href + "#" + peerId;
+        }
 
+        peer.on('open', id => console.log('Conectado con ID:', id));
+
+        // El amigo (Receptor) recibe la llamada automáticamente
         peer.on('call', call => {
             call.answer();
             call.on('stream', stream => {
                 video.srcObject = stream;
-                // Forzar latencia baja en el receptor
-                if ("VideoPlaybackQuality" in window) {
-                    video.play();
-                }
+                video.play();
             });
         });
 
-        // LÓGICA PARA OCULTAR CONTROLES
-        function handleMouseMove() {
-            ui.classList.add('show-controls');
-            clearTimeout(timer);
-            timer = setTimeout(() => {
-                ui.classList.remove('show-controls');
-            }, 3000); // Se oculta tras 3 segundos
-        }
-
-        function toggleMute() {
-            video.muted = !video.muted;
-            document.getElementById('muteBtn').innerText = video.muted ? 'SONIDO: OFF' : 'SONIDO: ON';
-        }
-
-        function goFullScreen() {
-            const container = document.getElementById('video-container');
-            if (container.requestFullscreen) container.requestFullscreen();
-            else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
-        }
-
-        async function startSharing() {
-            const friendId = document.getElementById('peer-id-input').value;
-            if (!friendId) return alert("Falta ID");
-
+        // 2. Transmisión de Operador (Cero Retraso)
+        async function startBroadcasting() {
             try {
-                // Configuración de stream para CERO LAG
                 const stream = await navigator.mediaDevices.getDisplayMedia({
                     video: { 
-                        cursor: "motion",
-                        frameRate: { ideal: 30, max: 60 }, // Fluidez sobre resolución
-                        width: { max: 1920 },
-                        height: { max: 1080 }
+                        displaySurface: "browser",
+                        frameRate: { ideal: 60, max: 60 },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     },
                     audio: {
                         echoCancellation: false,
                         noiseSuppression: false,
-                        autoGainControl: false // Evita que el navegador procese el audio y cause lag
+                        autoGainControl: false
                     }
                 });
 
-                // Boost de audio rápido
+                // Boost Audio
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const source = audioCtx.createMediaStreamSource(stream);
                 const gainNode = audioCtx.createGain();
-                gainNode.gain.value = 1.7; 
+                gainNode.gain.value = 1.8; 
                 const dest = audioCtx.createMediaStreamDestination();
                 source.connect(gainNode);
                 gainNode.connect(dest);
@@ -210,8 +194,30 @@
                 ]);
 
                 video.srcObject = finalStream;
-                peer.call(friendId, finalStream);
-            } catch (e) { alert("Error al iniciar."); }
+
+                // Intentar llamar al ID que está en el link (si ya hay alguien conectado)
+                // O simplemente esperar a que ellos entren. PeerJS conectará al entrar.
+                peer.call(targetId, finalStream);
+                
+                alert("Transmitiendo. Tus amigos deben abrir el link que copiaste.");
+            } catch (e) { console.error(e); }
+        }
+
+        function copyLink() {
+            const link = document.getElementById('copy-box').innerText;
+            navigator.clipboard.writeText(link);
+            alert("¡Link copiado! Pásalo a tus amigos.");
+        }
+
+        function toggleMute() {
+            video.muted = !video.muted;
+            document.getElementById('muteBtn').innerText = video.muted ? 'AUDIO: OFF' : 'AUDIO: ON';
+        }
+
+        function goFullScreen() {
+            const v = document.getElementById('video-container');
+            if (v.requestFullscreen) v.requestFullscreen();
+            else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
         }
     </script>
 </body>
