@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>PELISVICIO LIVE - Modo Cine</title>
+    <title>PELISVICIO - Ultra Low Latency</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Permanent+Marker&display=swap" rel="stylesheet">
     
@@ -15,8 +15,7 @@
 
         body {
             background-color: var(--negro-fondo);
-            background-image: 
-                linear-gradient(to bottom, rgba(5, 5, 5, 0.7), rgba(5, 5, 5, 0.9)),
+            background-image: linear-gradient(to bottom, rgba(5, 5, 5, 0.8), rgba(5, 5, 5, 0.9)),
                 url('https://wallpapers.com/images/hd/hd-anime-galaxy-xxotwlnlan1322q0.jpg');
             background-size: cover;
             background-position: center;
@@ -25,13 +24,13 @@
             font-family: 'Roboto', sans-serif;
             text-align: center;
             margin: 0;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         .header {
-            background: rgba(10, 10, 10, 0.85);
-            padding: 20px;
-            border-bottom: 3px solid var(--azul-neon);
+            background: rgba(10, 10, 10, 0.9);
+            padding: 15px;
+            border-bottom: 2px solid var(--azul-neon);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -41,147 +40,133 @@
         h1 {
             font-family: 'Permanent Marker', cursive;
             color: white;
-            font-size: 3em;
+            font-size: 2.5em;
             margin: 0;
-            letter-spacing: 5px;
-            text-shadow: 0 0 15px var(--azul-neon);
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px var(--azul-neon);
         }
 
-        .live-indicator {
-            width: 15px;
-            height: 15px;
-            background-color: rgba(229, 9, 20, 0.5);
-            border: 2px solid #e50914;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.9); opacity: 0.7; }
-            50% { transform: scale(1.1); opacity: 0.3; }
-            100% { transform: scale(0.9); opacity: 0.7; }
-        }
-
-        .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
+        .container { max-width: 950px; margin: 15px auto; padding: 10px; }
 
         .panel {
-            background: rgba(0, 51, 42, 0.5);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+            background: rgba(0, 51, 42, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
             border: 1px solid var(--azul-neon);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
         }
 
-        .id-tag {
-            color: var(--azul-neon);
-            font-weight: bold;
-            font-size: 1.5em;
-            font-family: 'Orbitron', sans-serif;
-        }
+        .id-tag { color: var(--azul-neon); font-weight: bold; font-family: 'Orbitron', sans-serif; }
 
         /* CONTENEDOR DE VIDEO */
         #video-container {
             position: relative;
             background: #000;
-            border-radius: 15px;
-            border: 4px solid var(--verde-neon);
+            border-radius: 12px;
+            border: 3px solid var(--verde-neon);
             overflow: hidden;
-            box-shadow: 0 0 40px rgba(0,0,0,0.9);
+            cursor: none; /* Oculta el puntero sobre el video */
         }
 
-        video { width: 100%; display: block; pointer-events: none; } /* pointer-events none evita el click derecho/pausa */
+        #video-container:hover { cursor: default; }
 
-        /* CONTROLES PERSONALIZADOS (Solo Pantalla Grande y Audio) */
+        video { width: 100%; display: block; pointer-events: none; }
+
+        /* CONTROLES QUE SE OCULTAN */
         .custom-controls {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.8));
-            padding: 15px;
+            bottom: 20px;
+            right: 20px;
             display: flex;
-            justify-content: flex-end;
-            gap: 20px;
-            opacity: 0;
-            transition: opacity 0.3s;
+            gap: 10px;
+            opacity: 0; /* Ocultos por defecto */
+            transition: opacity 0.5s ease;
+            z-index: 100;
         }
 
-        #video-container:hover .custom-controls { opacity: 1; }
+        /* Clase para mostrar controles cuando hay movimiento */
+        .show-controls { opacity: 1 !important; }
 
         .btn-control {
-            background: none;
+            background: rgba(0, 0, 0, 0.7);
             border: 1px solid var(--azul-neon);
             color: var(--azul-neon);
-            padding: 8px 15px;
+            padding: 10px 18px;
             cursor: pointer;
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.8em;
-            border-radius: 4px;
-            transition: 0.2s;
-        }
-
-        .btn-control:hover {
-            background: var(--azul-neon);
-            color: black;
-        }
-
-        input[type="text"], button#startBtn {
-            padding: 10px;
+            font-size: 0.7em;
             border-radius: 5px;
+            text-transform: uppercase;
+        }
+
+        .btn-control:hover { background: var(--azul-neon); color: black; }
+
+        input, button#startBtn {
+            padding: 8px;
             font-family: 'Orbitron', sans-serif;
+            border-radius: 4px;
             border: 1px solid var(--azul-neon);
         }
-        
-        button#startBtn {
-            background: var(--azul-neon);
-            color: black;
-            cursor: pointer;
-            font-weight: bold;
-        }
+
+        button#startBtn { background: var(--azul-neon); cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="live-indicator"></div>
-        <h1>PELISVICIO</h1>
+        <h1 id="main-title">PELISVICIO</h1>
     </div>
 
     <div class="container">
         <div class="panel">
-            <p>SALA: <span id="my-id" class="id-tag">...</span></p>
+            <p>ID SALA: <span id="my-id" class="id-tag">...</span></p>
             <input type="text" id="peer-id-input" placeholder="ID Amigo">
-            <button id="startBtn" onclick="startSharing()">TRANSMITIR</button>
+            <button id="startBtn" onclick="startSharing()">ENVIAR SEÑAL</button>
         </div>
 
-        <div id="video-container">
+        <div id="video-container" onmousemove="handleMouseMove()">
             <video id="remoteVideo" autoplay playsinline></video>
             
-            <div class="custom-controls">
-                <button class="btn-control" onclick="toggleMute()" id="muteBtn">SILENCIAR</button>
-                <button class="btn-control" onclick="goFullScreen()">PANTALLA GRANDE</button>
+            <div id="controls-ui" class="custom-controls">
+                <button class="btn-control" onclick="toggleMute()" id="muteBtn">SONIDO: ON</button>
+                <button class="btn-control" onclick="goFullScreen()">PANTALLA COMPLETA</button>
             </div>
         </div>
-        <p style="font-size: 0.7em; color: #666; margin-top: 10px;">Controles de pausa y tiempo desactivados por el administrador.</p>
     </div>
 
     <script>
         const shortId = Math.random().toString(36).substr(2, 5).toUpperCase();
         const peer = new Peer(shortId);
         const video = document.getElementById('remoteVideo');
+        const ui = document.getElementById('controls-ui');
+        let timer;
 
         peer.on('open', id => document.getElementById('my-id').innerText = id);
 
         peer.on('call', call => {
             call.answer();
-            call.on('stream', stream => { video.srcObject = stream; });
+            call.on('stream', stream => {
+                video.srcObject = stream;
+                // Forzar latencia baja en el receptor
+                if ("VideoPlaybackQuality" in window) {
+                    video.play();
+                }
+            });
         });
 
-        // FUNCIONES DE CONTROL PERMITIDAS
+        // LÓGICA PARA OCULTAR CONTROLES
+        function handleMouseMove() {
+            ui.classList.add('show-controls');
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                ui.classList.remove('show-controls');
+            }, 3000); // Se oculta tras 3 segundos
+        }
+
         function toggleMute() {
             video.muted = !video.muted;
-            document.getElementById('muteBtn').innerText = video.muted ? 'ACTIVAR SONIDO' : 'SILENCIAR';
+            document.getElementById('muteBtn').innerText = video.muted ? 'SONIDO: OFF' : 'SONIDO: ON';
         }
 
         function goFullScreen() {
@@ -190,22 +175,31 @@
             else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
         }
 
-        // TRANSMISIÓN CON BOOST DE AUDIO
         async function startSharing() {
             const friendId = document.getElementById('peer-id-input').value;
-            if (!friendId) return alert("ID necesario");
+            if (!friendId) return alert("Falta ID");
 
             try {
+                // Configuración de stream para CERO LAG
                 const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { cursor: "always" },
-                    audio: true
+                    video: { 
+                        cursor: "motion",
+                        frameRate: { ideal: 30, max: 60 }, // Fluidez sobre resolución
+                        width: { max: 1920 },
+                        height: { max: 1080 }
+                    },
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false // Evita que el navegador procese el audio y cause lag
+                    }
                 });
 
-                // Boost de Audio (Igual que el anterior)
-                const audioCtx = new AudioContext();
+                // Boost de audio rápido
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const source = audioCtx.createMediaStreamSource(stream);
                 const gainNode = audioCtx.createGain();
-                gainNode.gain.value = 1.6; 
+                gainNode.gain.value = 1.7; 
                 const dest = audioCtx.createMediaStreamDestination();
                 source.connect(gainNode);
                 gainNode.connect(dest);
@@ -217,7 +211,7 @@
 
                 video.srcObject = finalStream;
                 peer.call(friendId, finalStream);
-            } catch (e) { alert("Error al compartir."); }
+            } catch (e) { alert("Error al iniciar."); }
         }
     </script>
 </body>
