@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>PELISVICIO LIVE - P2P</title>
+    <title>PELISVICIO LIVE - Modo Cine</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Permanent+Marker&display=swap" rel="stylesheet">
     
@@ -10,7 +10,6 @@
         :root {
             --azul-neon: #00f2fe;
             --verde-neon: #4facfe;
-            --rojo-transparente: rgba(229, 9, 20, 0.5);
             --negro-fondo: #050505;
         }
 
@@ -26,14 +25,13 @@
             font-family: 'Roboto', sans-serif;
             text-align: center;
             margin: 0;
+            overflow-x: hidden;
         }
 
-        /* ENCABEZADO CON PELISVICIO Y CÍRCULO ROJO */
         .header {
             background: rgba(10, 10, 10, 0.85);
-            padding: 25px;
+            padding: 20px;
             border-bottom: 3px solid var(--azul-neon);
-            box-shadow: 0 5px 20px rgba(0, 242, 254, 0.3);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -43,17 +41,16 @@
         h1 {
             font-family: 'Permanent Marker', cursive;
             color: white;
-            font-size: 3.5em;
+            font-size: 3em;
             margin: 0;
             letter-spacing: 5px;
             text-shadow: 0 0 15px var(--azul-neon);
         }
 
-        /* Círculo Rojo Transparente que Parpadea */
         .live-indicator {
-            width: 25px;
-            height: 25px;
-            background-color: var(--rojo-transparente);
+            width: 15px;
+            height: 15px;
+            background-color: rgba(229, 9, 20, 0.5);
             border: 2px solid #e50914;
             border-radius: 50%;
             animation: pulse 1.5s infinite;
@@ -65,63 +62,83 @@
             100% { transform: scale(0.9); opacity: 0.7; }
         }
 
-        .container { max-width: 1100px; margin: 30px auto; padding: 20px; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
 
         .panel {
-            background: rgba(0, 51, 42, 0.5); /* Más transparente */
-            padding: 25px;
+            background: rgba(0, 51, 42, 0.5);
+            padding: 20px;
             border-radius: 12px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             border: 1px solid var(--azul-neon);
-            border-left: 8px solid var(--verde-neon);
             backdrop-filter: blur(8px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .id-tag {
             color: var(--azul-neon);
             font-weight: bold;
-            font-size: 1.8em;
-            font-family: 'Orbitron', sans-serif;
-            background: rgba(0,0,0,0.4);
-            padding: 5px 15px;
-            border-radius: 6px;
-            text-shadow: 0 0 8px var(--azul-neon);
-        }
-
-        input {
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 2px solid var(--azul-neon);
-            color: white;
-            border-radius: 5px;
-            width: 200px;
+            font-size: 1.5em;
             font-family: 'Orbitron', sans-serif;
         }
 
-        button {
-            padding: 12px 25px;
-            background: linear-gradient(180deg, var(--azul-neon), #0077be);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 5px;
-            font-family: 'Orbitron', sans-serif;
-            transition: 0.3s;
-        }
-
-        button:hover { box-shadow: 0 0 20px var(--azul-neon); transform: scale(1.05); }
-
-        #video-wrapper {
+        /* CONTENEDOR DE VIDEO */
+        #video-container {
+            position: relative;
             background: #000;
             border-radius: 15px;
             border: 4px solid var(--verde-neon);
-            box-shadow: 0 0 50px rgba(0,0,0,0.9);
             overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.9);
         }
 
-        video { width: 100%; display: block; }
+        video { width: 100%; display: block; pointer-events: none; } /* pointer-events none evita el click derecho/pausa */
+
+        /* CONTROLES PERSONALIZADOS (Solo Pantalla Grande y Audio) */
+        .custom-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #video-container:hover .custom-controls { opacity: 1; }
+
+        .btn-control {
+            background: none;
+            border: 1px solid var(--azul-neon);
+            color: var(--azul-neon);
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8em;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+
+        .btn-control:hover {
+            background: var(--azul-neon);
+            color: black;
+        }
+
+        input[type="text"], button#startBtn {
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            border: 1px solid var(--azul-neon);
+        }
+        
+        button#startBtn {
+            background: var(--azul-neon);
+            color: black;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -133,50 +150,74 @@
 
     <div class="container">
         <div class="panel">
-            <p>ID DE SALA: <span id="my-id" class="id-tag">...</span></p>
-            <div style="margin-top:20px; display:flex; justify-content:center; gap:10px;">
-                <input type="text" id="peer-id-input" placeholder="ID Amigo">
-                <button onclick="startSharing()">COMPARTIR PANTALLA</button>
-            </div>
+            <p>SALA: <span id="my-id" class="id-tag">...</span></p>
+            <input type="text" id="peer-id-input" placeholder="ID Amigo">
+            <button id="startBtn" onclick="startSharing()">TRANSMITIR</button>
         </div>
 
-        <div id="video-wrapper">
-            <video id="remoteVideo" autoplay playsinline controls></video>
+        <div id="video-container">
+            <video id="remoteVideo" autoplay playsinline></video>
+            
+            <div class="custom-controls">
+                <button class="btn-control" onclick="toggleMute()" id="muteBtn">SILENCIAR</button>
+                <button class="btn-control" onclick="goFullScreen()">PANTALLA GRANDE</button>
+            </div>
         </div>
+        <p style="font-size: 0.7em; color: #666; margin-top: 10px;">Controles de pausa y tiempo desactivados por el administrador.</p>
     </div>
 
     <script>
-        // Función para generar un ID corto aleatorio de 5 caracteres
         const shortId = Math.random().toString(36).substr(2, 5).toUpperCase();
-        
-        // Inicializar PeerJS con el ID corto
-        const peer = new Peer(shortId); 
+        const peer = new Peer(shortId);
+        const video = document.getElementById('remoteVideo');
 
-        peer.on('open', (id) => {
-            document.getElementById('my-id').innerText = id;
-        });
+        peer.on('open', id => document.getElementById('my-id').innerText = id);
 
-        peer.on('call', (call) => {
+        peer.on('call', call => {
             call.answer();
-            call.on('stream', (remoteStream) => {
-                document.getElementById('remoteVideo').srcObject = remoteStream;
-            });
+            call.on('stream', stream => { video.srcObject = stream; });
         });
 
+        // FUNCIONES DE CONTROL PERMITIDAS
+        function toggleMute() {
+            video.muted = !video.muted;
+            document.getElementById('muteBtn').innerText = video.muted ? 'ACTIVAR SONIDO' : 'SILENCIAR';
+        }
+
+        function goFullScreen() {
+            const container = document.getElementById('video-container');
+            if (container.requestFullscreen) container.requestFullscreen();
+            else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+        }
+
+        // TRANSMISIÓN CON BOOST DE AUDIO
         async function startSharing() {
             const friendId = document.getElementById('peer-id-input').value;
-            if (!friendId) return alert("Ingresa el ID de tu amigo");
+            if (!friendId) return alert("ID necesario");
 
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({
                     video: { cursor: "always" },
                     audio: true
                 });
-                document.getElementById('remoteVideo').srcObject = stream;
-                peer.call(friendId, stream);
-            } catch (err) {
-                alert("Error al compartir pantalla.");
-            }
+
+                // Boost de Audio (Igual que el anterior)
+                const audioCtx = new AudioContext();
+                const source = audioCtx.createMediaStreamSource(stream);
+                const gainNode = audioCtx.createGain();
+                gainNode.gain.value = 1.6; 
+                const dest = audioCtx.createMediaStreamDestination();
+                source.connect(gainNode);
+                gainNode.connect(dest);
+
+                const finalStream = new MediaStream([
+                    stream.getVideoTracks()[0],
+                    dest.stream.getAudioTracks()[0]
+                ]);
+
+                video.srcObject = finalStream;
+                peer.call(friendId, finalStream);
+            } catch (e) { alert("Error al compartir."); }
         }
     </script>
 </body>
