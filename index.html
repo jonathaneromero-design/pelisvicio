@@ -1,9 +1,9 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PELISVICIO LIVE - Ultra Low Latency</title>
+    <title>PELISVICIO LIVE - Modo Cine Puro</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Permanent+Marker&display=swap" rel="stylesheet">
     
@@ -17,7 +17,7 @@
         body {
             background-color: var(--negro-fondo);
             background-image: linear-gradient(to bottom, rgba(5, 5, 5, 0.8), rgba(5, 5, 5, 0.9)),
-                url('https://wallpapers.com/images/hd/hd-anime-galaxy-xxotwlnlan1322q0.jpg');
+                url('https://images.alphacoders.com/131/1317666.png');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -47,20 +47,6 @@
             text-shadow: 0 0 10px var(--azul-neon);
         }
 
-        .live-indicator {
-            width: 15px; height: 15px;
-            background-color: rgba(229, 9, 20, 0.5);
-            border: 2px solid #e50914;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.9); opacity: 0.7; }
-            50% { transform: scale(1.1); opacity: 0.3; }
-            100% { transform: scale(0.9); opacity: 0.7; }
-        }
-
         .container { max-width: 950px; margin: 15px auto; padding: 10px; }
 
         .operator-panel {
@@ -84,6 +70,7 @@
             word-break: break-all;
         }
 
+        /* CONTENEDOR DE VIDEO */
         #video-container {
             position: relative;
             background: #000;
@@ -91,22 +78,32 @@
             border: 4px solid var(--verde-neon);
             overflow: hidden;
             box-shadow: 0 0 50px rgba(0,0,0,0.9);
+            cursor: none; /* Oculta el puntero por defecto */
         }
+
+        /* Si el mouse se mueve, mostramos el puntero */
+        #video-container.show-cursor { cursor: default; }
 
         video { width: 100%; display: block; pointer-events: none; }
 
+        /* CONTROLES AUTO-OCULTABLES */
         .custom-controls {
             position: absolute;
             bottom: 25px;
             right: 25px;
             display: flex;
             gap: 12px;
-            opacity: 0;
-            transition: opacity 0.4s ease;
+            opacity: 0; /* Ocultos */
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s;
             z-index: 100;
         }
 
-        #video-container:hover .custom-controls { opacity: 1; }
+        /* Clase que activa la visibilidad */
+        .ui-visible {
+            opacity: 1;
+            visibility: visible;
+        }
 
         .btn-control {
             background: rgba(0, 0, 0, 0.85);
@@ -131,92 +128,81 @@
             color: white;
             cursor: pointer;
             font-family: 'Orbitron', sans-serif;
-            letter-spacing: 1px;
         }
-
-        button#startBtn:hover { box-shadow: 0 0 20px var(--azul-neon); transform: scale(1.02); }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="live-indicator"></div>
         <h1>PELISVICIO</h1>
     </div>
 
     <div class="container">
         <div class="operator-panel" id="op-ui">
-            <p style="margin:0; font-family: 'Orbitron'; color: var(--azul-neon);">CONFIGURACIÓN DE TRANSMISIÓN</p>
-            <div id="copy-box" onclick="copyLink()">Generando link de sala...</div>
-            <button id="startBtn" onclick="startBroadcasting()">INICIAR LIVE (SIN LAG)</button>
+            <p style="margin:0; font-family: 'Orbitron'; color: var(--azul-neon);">MODO OPERADOR</p>
+            <div id="copy-box" onclick="copyLink()">Generando link...</div>
+            <button id="startBtn" onclick="startBroadcasting()">INICIAR TRANSMISIÓN</button>
         </div>
 
         <div id="video-container">
             <video id="remoteVideo" autoplay playsinline></video>
             
-            <div class="custom-controls">
-                <button class="btn-control" onclick="toggleMute()" id="muteBtn">SONIDO: ON</button>
+            <div id="controls-ui" class="custom-controls">
+                <button class="btn-control" onclick="toggleMute()" id="muteBtn">AUDIO: ON</button>
                 <button class="btn-control" onclick="goFullScreen()">PANTALLA COMPLETA</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Lógica de URL Dinámica para GitHub Pages
         let hashId = window.location.hash.substring(1);
         const isOperator = !hashId;
-        
-        // El operador genera un ID, el receptor usa el que viene en el link
         const myId = isOperator ? Math.random().toString(36).substr(2, 5).toUpperCase() : "REC-" + hashId;
         const targetId = isOperator ? "REC-" + myId : myId;
 
-        const peer = new Peer(myId, { debug: 1 });
+        const peer = new Peer(myId);
         const video = document.getElementById('remoteVideo');
+        const container = document.getElementById('video-container');
+        const controls = document.getElementById('controls-ui');
+        let hideTimeout;
 
-        // Configuración de interfaz inicial
         if (!isOperator) {
             document.getElementById('op-ui').style.display = 'none';
         } else {
-            // Actualizar el link para compartir
             const fullLink = window.location.href.split('#')[0] + "#" + myId;
             document.getElementById('copy-box').innerText = fullLink;
         }
 
-        peer.on('open', id => console.log('Tu ID de red es:', id));
+        // LÓGICA PARA OCULTAR CONTROLES Y CURSOR
+        container.addEventListener('mousemove', () => {
+            controls.classList.add('ui-visible');
+            container.classList.add('show-cursor');
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                controls.classList.remove('ui-visible');
+                container.classList.remove('show-cursor');
+            }, 3000); // 3 segundos de inactividad
+        });
 
-        // El Receptor recibe la señal automáticamente
         peer.on('call', call => {
             call.answer();
             call.on('stream', stream => {
                 video.srcObject = stream;
-                // Ajuste de latencia al recibir
                 video.onloadedmetadata = () => {
                     video.play();
-                    if (video.buffered.length > 0) {
-                        video.currentTime = video.buffered.end(0) - 0.1;
-                    }
+                    if (video.buffered.length > 0) video.currentTime = video.buffered.end(0) - 0.1;
                 };
             });
         });
 
-        // Función del Operador para transmitir
         async function startBroadcasting() {
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { 
-                        frameRate: { ideal: 60, max: 60 },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false
-                    }
+                    video: { frameRate: 60 },
+                    audio: true
                 });
 
-                // Boost de Audio (1.8x)
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioCtx = new AudioContext();
                 const source = audioCtx.createMediaStreamSource(stream);
                 const gainNode = audioCtx.createGain();
                 gainNode.gain.value = 1.8; 
@@ -230,31 +216,24 @@
                 ]);
 
                 video.srcObject = finalStream;
-                
-                // Llamar al ID del receptor (que es el ID de la sala con prefijo REC-)
                 peer.call(targetId, finalStream);
-                
-                alert("¡Transmitiendo! Asegúrate de que tus amigos abrieron el link DESPUÉS de que tú iniciaste.");
-            } catch (e) {
-                alert("Error: Debes permitir captura de pantalla y audio.");
-            }
+                alert("Transmitiendo. Comparte el link.");
+            } catch (e) { alert("Error al capturar pantalla."); }
         }
 
         function copyLink() {
-            const link = document.getElementById('copy-box').innerText;
-            navigator.clipboard.writeText(link);
-            alert("Link de sala copiado. Pásalo a tus invitados.");
+            navigator.clipboard.writeText(document.getElementById('copy-box').innerText);
+            alert("Link copiado.");
         }
 
         function toggleMute() {
             video.muted = !video.muted;
-            document.getElementById('muteBtn').innerText = video.muted ? 'SONIDO: OFF' : 'SONIDO: ON';
+            document.getElementById('muteBtn').innerText = video.muted ? 'AUDIO: OFF' : 'AUDIO: ON';
         }
 
         function goFullScreen() {
-            const v = document.getElementById('video-container');
-            if (v.requestFullscreen) v.requestFullscreen();
-            else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+            if (container.requestFullscreen) container.requestFullscreen();
+            else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
         }
     </script>
 </body>
